@@ -1,8 +1,7 @@
-from app import app
-
+import pytest
+from app.main import app
 
 def test_hello():
-    # We use the test client provided by Flask
     test_client = app.test_client()
     response = test_client.get("/")
     assert response.status_code == 200
