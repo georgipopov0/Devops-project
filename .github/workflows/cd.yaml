@@ -33,7 +33,7 @@ jobs:
       - name: Tag and Push
         run: |
           docker tag my-flask-app:latest ${{ secrets.REGISTRY_URL }}/my-flask-app:latest
-          docker push ${{ secrets.REGISTRY_URL }}/my-flask-app:latest
+          docker push ${{ secrets.REGISTRY_URL }}:latest
 
       # (Optional) Test SQL Deltas / Migrations
       - name: Apply Database Migrations
