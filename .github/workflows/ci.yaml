@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "dev", "feature/*" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: |
+          cd src
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # Step 4: Linting (Style Check)
+      - name: Lint Code (flake8)
+        run: |
+          cd src
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      # Step 5: Format Check (Black)
+      - name: Format Check (Black)
+        run: |
+          cd src
+          black --check .
+      
+      # Step 6: Static Application Security Testing (Bandit)
+      - name: SAST (Bandit)
+        run: |
+          cd src
+          bandit -r .
+      
+      # Step 7: Run Unit Tests
+      - name: Run Unit Tests
+        run: |
+          cd src
+          pytest --cov=.
