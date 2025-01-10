@@ -8,35 +8,24 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Build Docker image
-      - name: Build Docker Image
-        run: |
-          docker build -t my-flask-app:latest .
-
-      # (Optional) Docker Image Vulnerability Scan
-      - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@master
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          image-ref: 'my-flask-app:latest'
+          python-version: "3.9"
 
-      # Push Docker Image to a registry (Docker Hub example)
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Tag and Push
+      - name: Install dependencies
         run: |
-          docker tag my-flask-app:latest ${{ secrets.REGISTRY_URL }}:latest
-          docker push ${{ secrets.REGISTRY_URL }}:latest
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
       # (Optional) Test SQL Deltas / Migrations
       - name: Apply Database Migrations
+        env:
+          FLASK_APP: app.main.py
         run: |
           flask db upgrade
-
