@@ -1,6 +1,6 @@
 # My Flask Application
 
-This project is a Flask-based application deployed using a robust CI/CD pipeline. The application and its infrastructure are managed with Docker and Kubernetes. The pipeline is configured with GitHub Actions to automate testing, building, and deploying the application.
+This project is a Flask-based application deployed using a robust CI/CD pipeline. The application and its infrastructure are managed with Docker and SQLAlchemy-based database migrations. The pipeline is configured with GitHub Actions to automate testing, building, and deploying the application.
 
 ## Project Structure
 
@@ -39,44 +39,17 @@ The `ci.yaml` workflow ensures code quality and reliability by performing the fo
 
 ### Continuous Deployment (CD)
 
-The `cd.yaml` workflow automates the deployment of the Flask application to a Kubernetes cluster.
+The `cd.yaml` workflow automates the deployment of the Flask application, including applying database migrations.
 
 - **Trigger**:
   - Runs on push to the `main` branch or manually via `workflow_dispatch`.
 - **Steps**:
   1. **Code Checkout**: Fetch the latest code.
-  2. **Build Docker Image**: Build the Docker image for the Flask application.
-  3. **Vulnerability Scan**: Scan the Docker image for vulnerabilities using Trivy.
-  4. **Push to Registry**: Push the Docker image to a specified container registry.
-  5. **Database Migration**: Apply SQL migrations (if required).
-
+  2. **Python Setup**: Install Python 3.9 and dependencies.
+  3. **Database Migration**: Apply database migrations using Flask-Migrate.
 
 **Workflow File:** [cd.yaml](.github/workflows/cd.yaml)
 
-## Docker Image
-
-The application is containerized using the following `Dockerfile`:
-
-```dockerfile
-# Use an official Python runtime
-FROM python:3.9-slim
-
-# Set the working directory
-WORKDIR /app
-
-# Copy dependencies
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application source code
-COPY app/ ./app
-
-# Expose the Flask port
-EXPOSE 5000
-
-# Run the application
-CMD ["python", "app/main.py"]
-```
 
 ### Building the Docker Image
 
@@ -105,6 +78,8 @@ pytest-cov
 flake8
 black
 bandit
+SQLAlchemy
+Flask-Migrate
 ```
 
 To install the dependencies:
@@ -113,6 +88,95 @@ To install the dependencies:
 pip install -r requirements.txt
 ```
 
+## Database and Migrations
 
-This project is a demonstration of a complete CI/CD pipeline using modern tools like GitHub Actions and Docker. It serves as a template for deploying Flask applications in production-ready environments.
+This project uses **SQLAlchemy** for ORM and **Flask-Migrate** for database migrations.
+
+### Setting up the Database
+
+By default, the application uses SQLite as the database, configured in `app/main.py`:
+
+```python
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+```
+
+Update the `SQLALCHEMY_DATABASE_URI` if using another database (e.g., PostgreSQL or MySQL).
+
+### Running Migrations Locally
+
+1. Initialize the migration environment:
+
+   ```bash
+   flask db init
+   ```
+
+2. Create a migration script based on changes to models:
+
+   ```bash
+   flask db migrate -m "Initial migration"
+   ```
+
+3. Apply migrations to update the database schema:
+
+   ```bash
+   flask db upgrade
+   ```
+
+### Running Migrations in CI/CD
+
+The CD workflow includes a step to apply migrations:
+
+```yaml
+- name: Apply Database Migrations
+  env:
+    FLASK_APP: app.main.py
+  run: |
+    flask db upgrade
+```
+
+## Running Locally
+
+To run the application locally:
+
+1. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Start the Flask application:
+
+   ```bash
+   python app/main.py
+   ```
+
+3. Open your browser and navigate to `http://localhost:5000`.
+
+## Unit Testing
+
+The project includes unit tests to verify application functionality.
+
+### Running Tests
+
+To run tests locally:
+
+```bash
+pytest tests/
+```
+
+### Test Example
+
+An example test is provided in `tests/test_app.py`:
+
+```python
+from app.main import app
+
+def test_hello():
+    test_client = app.test_client()
+    response = test_client.get("/")
+    assert response.status_code == 200
+    assert response.get_json() == {"message": "Hello, DevOps!"}
+```
+
+This project is a demonstration of a complete CI/CD pipeline using modern tools like GitHub Actions, Docker, and Flask-Migrate. It serves as a template for deploying Flask applications with database integration in production-ready environments.
 
