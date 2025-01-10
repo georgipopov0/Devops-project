@@ -38,22 +38,5 @@ jobs:
       # (Optional) Test SQL Deltas / Migrations
       - name: Apply Database Migrations
         run: |
-          # Example migration command
-          # alembic upgrade head
-          echo "Running DB migrations or checking SQL deltas..."
+          flask db upgrade
 
-      # Rolling Deployment to Kubernetes
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
-
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/flask-deployment \
-            flask-container=${{ secrets.REGISTRY_URL }}/my-flask-app:latest
-          kubectl rollout status deployment/flask-deployment
